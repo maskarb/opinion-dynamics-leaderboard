@@ -15,7 +15,7 @@ def main():
     scenario = int(sys.argv[-1]) if len(sys.argv) > 1 else 1
     # Run the model
     model = DemandModel(num_agents, scenario)
-    for i in range(time_steps):
+    for _ in range(time_steps):
         model.step()
 
     # Store the results
