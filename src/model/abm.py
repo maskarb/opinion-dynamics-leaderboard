@@ -1,16 +1,11 @@
 import sys
 
-import pandas as pd
-import matplotlib.pyplot as plt
 import numpy as np
-import pprint
-from mesa.space import MultiGrid
 from mesa import Agent, Model
 from mesa.time import RandomActivation
-from mesa.datacollection import DataCollector
 
-### load some owned plot functions
-from plot_functions import plot_colormap, plot_agents, plot_mean_std
+# load some owned plot functions
+# from utils.plot_functions import plot_colormap, plot_agents, plot_mean_std
 
 
 class DemandAgent(Agent):
@@ -19,10 +14,10 @@ class DemandAgent(Agent):
     def __init__(self, unique_id, model):
         super().__init__(unique_id, model)
         self.opinion = [0]
-        self.decision = [np.random.randint(0, 2)] #[0]
+        self.decision = [np.random.randint(0, 2)]  # [0]
         self.a = np.random.randint(0, 2, size=self.model.n_agents)
         self.b = np.random.randint(0, 2, size=self.model.n_agents)
-        self.threshold = np.random.uniform(0.3, 0.9) # 0.9
+        self.threshold = np.random.uniform(0.3, 0.9)  # 0.9
         self.rank = [0]
 
     def update_decision(self):
@@ -30,20 +25,20 @@ class DemandAgent(Agent):
         # print('opinion', self.opinion, 'threshold', self.threshold)
         # print('O[-1]', self.opinion[-1])
 
-        ## Basset formulation:
+        # Basset formulation:
         # if self.opinion[-1] >= self.threshold:
         #     self.decision.append(1)
         # else:
         #     self.decision.append(0)
 
-        ## Du formulation
+        # Du formulation
         if self.decision[-1] == 0 and self.opinion[-1] < self.threshold:
             self.decision.append(0)
         else:
             self.decision.append(1)
 
-    def update_opinion(self):
-        gb = self.model.global_broadcast # 0 or 1
+    def update_opinion(self):  # noqa: C901
+        gb = self.model.global_broadcast  # 0 or 1
         u_j = np.random.randint(0, 2)
 
         # Opinion from global_broadcast + social media:
@@ -54,7 +49,7 @@ class DemandAgent(Agent):
 
         # Opinion from global_broadcast + social media:
         elif self.model.scenario == 2:
-            sum_aijOi = self.a[self.unique_id] * self.opinion[self.model.schedule.time] # 0
+            sum_aijOi = self.a[self.unique_id] * self.opinion[self.model.schedule.time]  # 0
             for agent in self.model.schedule.agents:
                 if agent.unique_id != self.unique_id:
                     sum_aijOi += self.a[agent.unique_id] * agent.opinion[self.model.schedule.time]
@@ -102,11 +97,10 @@ class DemandAgent(Agent):
     # def response_to_leaderboard(self):
     #     max(agent.opinion[time] for agent in self.model.schedule.agents)
 
-        # aux = self.
-        # for agent in self.model.schedule.agents:
-        #     if agent.score
-        # dmax =
-
+    # aux = self.
+    # for agent in self.model.schedule.agents:
+    #     if agent.score
+    # dmax =
 
     def step(self):
         self.update_opinion()
@@ -116,6 +110,7 @@ class DemandAgent(Agent):
         #     self.update_opinion()
         # else:
         #     self.opinion.append(self.opinion[-1])
+
 
 class DemandModel(Model):
     """A model with some number of agents."""
@@ -150,6 +145,7 @@ class DemandModel(Model):
 
             self.current_opinion = agent.opinion[self.schedule.time]
             agent.rank.append(self.current_rank)
+
     # def step(self):
     #     """Advance the model by one step."""
     #     self.schedule.step()
@@ -160,10 +156,11 @@ class DemandModel(Model):
     #     for i, agent in enumerate(ranked_agents):
     #         agent.rank.append(i)
 
+
 def main():
     # for runs in range(0, 1):
-    num_agents = 5 # 100
-    time_steps = 5 # 30
+    num_agents = 5  # 100
+    time_steps = 5  # 30
     scenario = int(sys.argv[-1]) if len(sys.argv) > 1 else 1
     # Run the model
     model = DemandModel(num_agents, scenario)
@@ -171,17 +168,17 @@ def main():
         model.step()
 
     # Store the results
-    all_opinion = np.zeros(shape=(time_steps+1, num_agents))
+    all_opinion = np.zeros(shape=(time_steps + 1, num_agents))
     for i, agent in enumerate(model.schedule.agents):
         all_opinion[:, i] = np.array(agent.opinion)
-        print('Agent rank', agent.rank, 'Agent opinion', agent.opinion)
+        print("Agent rank", agent.rank, "Agent opinion", agent.opinion)
 
     # print the all_opinion array
-    pp = pprint.PrettyPrinter(indent=4)
+    # pp = pprint.PrettyPrinter(indent=4)
     # pp.pprint(all_opinion.T)
 
     # Plot the opinion of a single agent
-    agent_ID = np.random.randint(0, num_agents)
+    # agent_ID = np.random.randint(0, num_agents)
     # plot_agents(all_opinion.T[agent_ID], time_steps, agent_ID)
 
     # Plot the colormap of all the agents' opiinions
