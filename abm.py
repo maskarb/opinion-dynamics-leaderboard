@@ -85,7 +85,6 @@ class DemandAgent(Agent):
 
     def scores(self):
         shower_threshold = 0.75
-        shower_points = 100
         laundry_threshold = 0.50
         laundry_points = 75
         irrig_threshold = 0.30
@@ -93,10 +92,11 @@ class DemandAgent(Agent):
 
         # Compare opinion and assign points
         if self.opinion >= shower_threshold:
+            shower_points = 100
             self.score += shower_points
-        elif self.opinion >= laundry_threshold and self.opinion < shower_threshold:
+        elif self.opinion >= laundry_threshold:
             self.score += laundry_points
-        elif self.opinion >= irrig_threshold and self.opinion < laundry_threshold:
+        elif self.opinion >= irrig_threshold:
             self.score += irrig_points
 
     # def response_to_leaderboard(self):
@@ -145,13 +145,11 @@ class DemandModel(Model):
         self.current_opinion = 0
         self.current_rank = 0
         for i, agent in enumerate(ranked_agents):
-            if agent.opinion[self.schedule.time] >= self.current_opinion:
-                self.current_opinion = agent.opinion[self.schedule.time]
-                agent.rank.append(self.current_rank)
-            else:
-                self.current_opinion = agent.opinion[self.schedule.time]
+            if agent.opinion[self.schedule.time] < self.current_opinion:
                 self.current_rank = i
-                agent.rank.append(self.current_rank)
+
+            self.current_opinion = agent.opinion[self.schedule.time]
+            agent.rank.append(self.current_rank)
     # def step(self):
     #     """Advance the model by one step."""
     #     self.schedule.step()
