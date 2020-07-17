@@ -10,7 +10,7 @@ from model.demand_model import DemandModel
 
 def main():
     # for runs in range(0, 1):
-    num_agents = 5  # 100
+    num_agents = 10  # 100
     time_steps = 5  # 30
     scenario = int(sys.argv[-1]) if len(sys.argv) > 1 else 1
     # Run the model
