@@ -14,6 +14,20 @@ class DemandAgent(Agent):
         self.b = np.random.randint(0, 2, size=self.model.n_agents)
         self.threshold = np.random.uniform(0.3, 0.9)  # 0.9
         self.rank = [0]
+        self.score = [0]
+
+    def __eq__(self, other):
+        return self.__class__ == other.__class__ and self.od_opinion[self.time] == other.od_opinion[self.time]
+
+    def __lt__(self, other):
+        return self.od_opinion[self.time] < other.od_opinion[self.time]
+
+    def __gt__(self, other):
+        return self.od_opinion[self.time] > other.od_opinion[self.time]
+
+    @property
+    def time(self):
+        return self.model.schedule.time
 
     def update_decision(self):
         # self.decision = 1
@@ -73,32 +87,25 @@ class DemandAgent(Agent):
             op_gb_sm_n = (sum_aijOi + sum_bijXi + u_j * gb) / (sum(self.a) + sum(self.b) + u_j)
             self.od_opinion.append(op_gb_sm_n)
 
-    def scores(self):
+    def calculate_score(self):
+        opinion = self.od_opinion[self.model.schedule.time]
+        score = 0
         shower_threshold = 0.75
         laundry_threshold = 0.50
-        laundry_points = 75
         irrig_threshold = 0.30
-        irrig_points = 50
 
         # Compare opinion and assign points
-        if self.od_opinion >= shower_threshold:
-            shower_points = 100
-            self.score += shower_points
-        elif self.od_opinion >= laundry_threshold:
-            self.score += laundry_points
-        elif self.od_opinion >= irrig_threshold:
-            self.score += irrig_points
-
-    # def response_to_leaderboard(self):
-    #     max(agent.opinion[time] for agent in self.model.schedule.agents)
-
-    # aux = self.
-    # for agent in self.model.schedule.agents:
-    #     if agent.score
-    # dmax =
+        if opinion >= shower_threshold:
+            score += self.model.config.shower_points
+        elif opinion >= laundry_threshold:
+            score += self.model.config.laundry_points
+        elif opinion >= irrig_threshold:
+            score += self.model.config.irrig_points
+        self.score.append(score)
 
     def step(self):
         self.update_opinion()
+        self.calculate_score()
         # self.update_decision()
         # self.update_decision()
         # if self.decision[-1] == 1:
