@@ -6,8 +6,9 @@ from mesa import Agent
 class DemandAgent(Agent):
     """An agent with initial opinion."""
 
-    def __init__(self, unique_id, model):
+    def __init__(self, unique_id, model, leaderboard):
         super().__init__(unique_id, model)
+        self.type = leaderboard
         self.od_opinion = [0]
         self.decision = [np.random.randint(0, 2)]  # [0]
         self.a = np.random.randint(0, 2, size=self.model.n_agents)
@@ -57,22 +58,22 @@ class DemandAgent(Agent):
 
         # Opinion from global_broadcast + social media:
         if self.model.scenario == 1:
-            O_j = self.new_opinion[self.time]
+            O_j = getattr(self, self.type)[self.time]
             op_gb = (O_j + u_j * gb) / (1 + u_j)
             self.od_opinion.append(op_gb)
 
         # Opinion from global_broadcast + social media:
         elif self.model.scenario == 2:
-            sum_aijOi = self.a[self.unique_id] * self.new_opinion[self.time]  # 0
+            sum_aijOi = self.a[self.unique_id] * getattr(self, self.type)[self.time]  # 0
             for agent in self.model.schedule.agents:
                 if agent.unique_id != self.unique_id:
-                    sum_aijOi += self.a[agent.unique_id] * agent.new_opinion[self.time]
+                    sum_aijOi += self.a[agent.unique_id] * getattr(agent, agent.type)[self.time]
             op_gb_sm = (sum_aijOi + u_j * gb) / (sum(self.a) + u_j)
             self.od_opinion.append(op_gb_sm)
 
         # Opinion from global_broadcast + neighbors:
         elif self.model.scenario == 3:
-            O_j = self.new_opinion[self.time]
+            O_j = getattr(self, self.type)[self.time]
             sum_bijXi = self.b[self.unique_id] * self.decision[self.time]
             for agent in self.model.schedule.agents:
                 if agent.unique_id != self.unique_id:
@@ -82,12 +83,12 @@ class DemandAgent(Agent):
 
         # Opinion from global_broadcast + social media + neighbors:
         elif self.model.scenario == 4:
-            O_j = self.od_opinion[self.time]
-            sum_aijOi = self.a[self.unique_id] * self.new_opinion[self.time]
+            O_j = getattr(self, self.type)[self.time]
+            sum_aijOi = self.a[self.unique_id] * getattr(self, self.type)[self.time]
             sum_bijXi = self.b[self.unique_id] * self.decision[self.time]
             for agent in self.model.schedule.agents:
                 if agent.unique_id != self.unique_id:
-                    sum_aijOi += self.a[agent.unique_id] * agent.od_opinion[self.time]
+                    sum_aijOi += self.a[agent.unique_id] * getattr(agent, agent.type)[self.time]
                     sum_bijXi += self.b[agent.unique_id] * agent.decision[self.time]
             op_gb_sm_n = (sum_aijOi + sum_bijXi + u_j * gb) / (sum(self.a) + sum(self.b) + u_j)
             self.od_opinion.append(op_gb_sm_n)
@@ -95,17 +96,12 @@ class DemandAgent(Agent):
     def calculate_score(self):
         opinion = self.od_opinion[self.time]
         score = self.score[self.time]
-        shower_threshold = 0.75
-        laundry_threshold = 0.50
-        irrig_threshold = 0.30
 
-        # Compare opinion and assign points
-        if opinion >= shower_threshold:
-            score += self.model.config.shower_points
-        elif opinion >= laundry_threshold:
-            score += self.model.config.laundry_points
-        elif opinion >= irrig_threshold:
-            score += self.model.config.irrig_points
+        for ranking in self.model.config.ranking_attrs:
+            threshold = self.model.config.get(ranking)
+            if opinion >= threshold.threshold:
+                score += threshold.points
+                break
         self.score.append(score)
 
     def step(self):
