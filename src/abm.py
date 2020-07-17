@@ -22,7 +22,7 @@ def main():
     all_opinion = np.zeros(shape=(time_steps + 1, num_agents))
     for i, agent in enumerate(model.schedule.agents):
         all_opinion[:, i] = np.array(agent.od_opinion)
-        print("Agent rank", agent.rank, "Agent opinion", agent.od_opinion)
+        print(f"Agent rank: {agent.rank} Agent opinion {agent.od_opinion}, Agent Score: {agent.score}")
 
     # print the all_opinion array
     # pp = pprint.PrettyPrinter(indent=4)

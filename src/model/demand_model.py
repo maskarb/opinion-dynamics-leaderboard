@@ -4,11 +4,26 @@ from mesa.time import RandomActivation
 from model.demand_agent import DemandAgent
 
 
+class Config:
+    @property
+    def shower_points(self):
+        return 100
+
+    @property
+    def laundry_points(self):
+        return 75
+
+    @property
+    def irrig_points(self):
+        return 50
+
+
 class DemandModel(Model):
     """A model with some number of agents."""
 
     def __init__(self, N, scenario):
         super().__init__()
+        self.config = Config()
         self.global_broadcast = 1
         self.scenario = scenario
         self.schedule = RandomActivation(self)
@@ -22,7 +37,7 @@ class DemandModel(Model):
         self.schedule.step()
         for agent in self.schedule.agents:
             agent.update_decision()
-        ranked_agents = sorted(self.schedule.agents, key=self.opinion_rank, reverse=True)
+        ranked_agents = sorted(self.schedule.agents, reverse=True)
         self.give_agents_rank(ranked_agents)
 
     def opinion_rank(self, agent):
