@@ -15,6 +15,11 @@ class DemandAgent(Agent):
         self.threshold = np.random.uniform(0.3, 0.9)  # 0.9
         self.rank = [0]
         self.score = [0]
+        self.O_ave = [0]
+        self.S_ave = [0]
+        self.D = [0]
+        self.F = [0]
+        self.new_opinion = [0]
 
     def __eq__(self, other):
         return self.__class__ == other.__class__ and self.od_opinion[self.time] == other.od_opinion[self.time]
@@ -52,44 +57,44 @@ class DemandAgent(Agent):
 
         # Opinion from global_broadcast + social media:
         if self.model.scenario == 1:
-            O_j = self.od_opinion[self.model.schedule.time]
+            O_j = self.new_opinion[self.time]
             op_gb = (O_j + u_j * gb) / (1 + u_j)
             self.od_opinion.append(op_gb)
 
         # Opinion from global_broadcast + social media:
         elif self.model.scenario == 2:
-            sum_aijOi = self.a[self.unique_id] * self.od_opinion[self.model.schedule.time]  # 0
+            sum_aijOi = self.a[self.unique_id] * self.new_opinion[self.time]  # 0
             for agent in self.model.schedule.agents:
                 if agent.unique_id != self.unique_id:
-                    sum_aijOi += self.a[agent.unique_id] * agent.opinion[self.model.schedule.time]
+                    sum_aijOi += self.a[agent.unique_id] * agent.new_opinion[self.time]
             op_gb_sm = (sum_aijOi + u_j * gb) / (sum(self.a) + u_j)
             self.od_opinion.append(op_gb_sm)
 
         # Opinion from global_broadcast + neighbors:
         elif self.model.scenario == 3:
-            O_j = self.od_opinion[self.model.schedule.time]
-            sum_bijXi = self.b[self.unique_id] * self.decision[self.model.schedule.time]
+            O_j = self.new_opinion[self.time]
+            sum_bijXi = self.b[self.unique_id] * self.decision[self.time]
             for agent in self.model.schedule.agents:
                 if agent.unique_id != self.unique_id:
-                    sum_bijXi += self.b[agent.unique_id] * agent.decision[self.model.schedule.time]
+                    sum_bijXi += self.b[agent.unique_id] * agent.decision[self.time]
             op_gb_n = (O_j + sum_bijXi + u_j * gb) / (1 + sum(self.b) + u_j)
             self.od_opinion.append(op_gb_n)
 
         # Opinion from global_broadcast + social media + neighbors:
         elif self.model.scenario == 4:
-            O_j = self.od_opinion[self.model.schedule.time]
-            sum_aijOi = self.a[self.unique_id] * self.od_opinion[self.model.schedule.time]
-            sum_bijXi = self.b[self.unique_id] * self.decision[self.model.schedule.time]
+            O_j = self.od_opinion[self.time]
+            sum_aijOi = self.a[self.unique_id] * self.new_opinion[self.time]
+            sum_bijXi = self.b[self.unique_id] * self.decision[self.time]
             for agent in self.model.schedule.agents:
                 if agent.unique_id != self.unique_id:
-                    sum_aijOi += self.a[agent.unique_id] * agent.opinion[self.model.schedule.time]
-                    sum_bijXi += self.b[agent.unique_id] * agent.decision[self.model.schedule.time]
+                    sum_aijOi += self.a[agent.unique_id] * agent.od_opinion[self.time]
+                    sum_bijXi += self.b[agent.unique_id] * agent.decision[self.time]
             op_gb_sm_n = (sum_aijOi + sum_bijXi + u_j * gb) / (sum(self.a) + sum(self.b) + u_j)
             self.od_opinion.append(op_gb_sm_n)
 
     def calculate_score(self):
-        opinion = self.od_opinion[self.model.schedule.time]
-        score = 0
+        opinion = self.od_opinion[self.time]
+        score = self.score[self.time]
         shower_threshold = 0.75
         laundry_threshold = 0.50
         irrig_threshold = 0.30

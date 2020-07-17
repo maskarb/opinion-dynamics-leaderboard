@@ -1,6 +1,7 @@
 from mesa import Model
 from mesa.time import RandomActivation
 
+from leaderboard.model import convert_opinion
 from model.demand_agent import DemandAgent
 
 
@@ -22,6 +23,7 @@ class DemandModel(Model):
     """A model with some number of agents."""
 
     def __init__(self, N, scenario):
+        assert N >= 10
         super().__init__()
         self.config = Config()
         self.global_broadcast = 1
@@ -38,7 +40,10 @@ class DemandModel(Model):
         for agent in self.schedule.agents:
             agent.update_decision()
         ranked_agents = sorted(self.schedule.agents, reverse=True)
-        self.give_agents_rank(ranked_agents)
+        for i, agent in enumerate(ranked_agents):
+            agent.rank.append(i)
+        # self.give_agents_rank(ranked_agents)
+        convert_opinion(ranked_agents, self.schedule.time)
 
     def opinion_rank(self, agent):
         return agent.od_opinion[self.schedule.time]
