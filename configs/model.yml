@@ -1,0 +1,13 @@
+
+shower:
+  points: 100
+  threshold: 0.75
+laundry:
+  points: 75
+  threshold: 0.50
+irrig:
+  points: 50
+  threshold: 0.30
+something_new:
+  points: 2
+  threshold: 0.123

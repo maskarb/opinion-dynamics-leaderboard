@@ -3,35 +3,22 @@ from mesa.time import RandomActivation
 
 from leaderboard.model import convert_opinion
 from model.demand_agent import DemandAgent
-
-
-class Config:
-    @property
-    def shower_points(self):
-        return 100
-
-    @property
-    def laundry_points(self):
-        return 75
-
-    @property
-    def irrig_points(self):
-        return 50
+from utils.config import Config
 
 
 class DemandModel(Model):
     """A model with some number of agents."""
 
-    def __init__(self, N, scenario):
+    def __init__(self, N, scenario, config_dikt):
         assert N >= 10
         super().__init__()
-        self.config = Config()
+        self.config = Config(config_dikt)
         self.global_broadcast = 1
         self.scenario = scenario
         self.schedule = RandomActivation(self)
         self.n_agents = N
         for i in range(self.n_agents):
-            ag = DemandAgent(i, self)
+            ag = DemandAgent(i, self, "od_opinion")
             self.schedule.add(ag)
 
     def step(self):
