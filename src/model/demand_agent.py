@@ -75,13 +75,13 @@ class DemandAgent(Agent):
     def update_decision(self):
         # self.decision = 1
         # print('opinion', self.od_opinion, 'threshold', self.threshold)
-        # print('O[-1]', self.od_opinion[-1])
+        # print('O[-1]', self.last_decision)
 
         # Basset formulation:
-        # if self.od_opinion[-1] >= self.threshold:
-        #     self.decision.append(1)
+        # if self.last_decision >= self.threshold:
+        #     self.decision = 1
         # else:
-        #     self.decision.append(0)
+        #     self.decision = 0
 
         # Du formulation
         if self.last_decision == 0 and self.last_od_opinion < self.threshold:
@@ -95,40 +95,19 @@ class DemandAgent(Agent):
 
         # Opinion from global_broadcast + social media:
         if self.model.scenario == 1:
-            O_j = self.opinion
-            op_gb = (O_j + u_j * gb) / (1 + u_j)
-            self.od_opinion = op_gb
+            self.scenario_1(gb, u_j)
 
         # Opinion from global_broadcast + social media:
         elif self.model.scenario == 2:
-            sum_aijOi = self.a[self.id] * self.opinion  # 0
-            for agent in self.model.schedule.agents:
-                if agent.id != self.id:
-                    sum_aijOi += self.a[agent.id] * self.opinion
-            op_gb_sm = (sum_aijOi + u_j * gb) / (self.sum_a + u_j)
-            self.od_opinion = op_gb_sm
+            self.scenario_2(gb, u_j)
 
         # Opinion from global_broadcast + neighbors:
         elif self.model.scenario == 3:
-            O_j = self.opinion
-            sum_bijXi = self.b[self.id] * self.decision
-            for agent in self.model.schedule.agents:
-                if agent.id != self.id:
-                    sum_bijXi += self.b[agent.id] * agent.decision
-            op_gb_n = (O_j + sum_bijXi + u_j * gb) / (1 + self.sum_b + u_j)
-            self.od_opinion = op_gb_n
+            self.scenario_3(gb, u_j)
 
         # Opinion from global_broadcast + social media + neighbors:
         elif self.model.scenario == 4:
-            O_j = self.opinion
-            sum_aijOi = self.a[self.id] * self.opinion
-            sum_bijXi = self.b[self.id] * self.decision
-            for agent in self.model.schedule.agents:
-                if agent.id != self.id:
-                    sum_aijOi += self.a[agent.id] * self.opinion
-                    sum_bijXi += self.b[agent.id] * agent.decision
-            op_gb_sm_n = (sum_aijOi + sum_bijXi + u_j * gb) / (self.sum_a + self.sum_b + u_j)
-            self.od_opinion = op_gb_sm_n
+            self.scenario_4(gb, u_j)
 
     def calculate_score(self):
         opinion = self.od_opinion[self.time]
@@ -141,12 +120,36 @@ class DemandAgent(Agent):
                 break
         self.score.append(score)
 
+    def scenario_1(self, gb, u_j):
+        op_gb = (self.opinion + u_j * gb) / (1 + u_j)
+        self.od_opinion = op_gb
+
+    def scenario_2(self, gb, u_j):
+        sum_aijOi = self.a[self.id] * self.opinion  # 0
+        for agent in self.model.schedule.agents:
+            if agent.id != self.id:
+                sum_aijOi += self.a[agent.id] * self.opinion
+        op_gb_sm = (sum_aijOi + u_j * gb) / (self.sum_a + u_j)
+        self.od_opinion = op_gb_sm
+
+    def scenario_3(self, gb, u_j):
+        sum_bijXi = self.b[self.id] * self.decision
+        for agent in self.model.schedule.agents:
+            if agent.id != self.id:
+                sum_bijXi += self.b[agent.id] * agent.decision
+        op_gb_n = (self.opinion + sum_bijXi + u_j * gb) / (1 + self.sum_b + u_j)
+        self.od_opinion = op_gb_n
+
+    def scenario_4(self, gb, u_j):
+        sum_aijOi = self.a[self.id] * self.opinion
+        sum_bijXi = self.b[self.id] * self.decision
+        for agent in self.model.schedule.agents:
+            if agent.id != self.id:
+                sum_aijOi += self.a[agent.id] * self.opinion
+                sum_bijXi += self.b[agent.id] * agent.decision
+        op_gb_sm_n = (sum_aijOi + sum_bijXi + u_j * gb) / (self.sum_a + self.sum_b + u_j)
+        self.od_opinion = op_gb_sm_n
+
     def step(self):
         self.update_opinion()
         self.calculate_score()
-        # self.update_decision()
-        # self.update_decision()
-        # if self.decision[-1] == 1:
-        #     self.update_opinion()
-        # else:
-        #     self.od_opinion.append(self.od_opinion[-1])
