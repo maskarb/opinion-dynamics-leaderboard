@@ -10,7 +10,9 @@ from utils.config import read_yaml
 
 
 def main():
-    model_config = "/Users/mskarbek/Documents/random/opinion-dynamics-leaderboard/configs/model.yml"
+    seed = 100
+    np.random.seed(seed)
+    model_config = "/Users/mskarbek/Documents/random/opinion-dynamics-leaderboard/configs/scores.yml"
     config_dikt = read_yaml(model_config)
     # for runs in range(0, 1):
     num_agents = 10  # 100
@@ -19,7 +21,7 @@ def main():
     # Run the model
     for scenario in range(1, 5):
         print(f"######### Begin Scenario: {scenario} #########")
-        model = DemandModel(num_agents, scenario, config_dikt)
+        model = DemandModel(num_agents, scenario, config_dikt, seed=100)
         for _ in range(time_steps):
             model.step()
 
@@ -27,7 +29,9 @@ def main():
         all_opinion = np.zeros(shape=(time_steps + 1, num_agents))
         for i, agent in enumerate(model.schedule.agents):
             all_opinion[:, i] = np.array(agent.od_opinion)
-            print(f"Agent rank: {agent.rank} Agent opinion {agent.od_opinion}, Agent Score: {agent.score}")
+            print(
+                f"Agent rank: {agent.rank} Agent opinion {[round(x, 2) for x in agent.od_opinion]}, Agent Score: {agent.score}"  # noqa: E501
+            )
         print(f"######### End Scenario: {scenario} #########\n")
 
     # print the all_opinion array

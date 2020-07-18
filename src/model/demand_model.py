@@ -9,9 +9,9 @@ from utils.config import Config
 class DemandModel(Model):
     """A model with some number of agents."""
 
-    def __init__(self, N, scenario, config_dikt):
+    def __init__(self, N, scenario, config_dikt, seed=None):
         assert N >= 10
-        super().__init__()
+        super().__init__(seed)
         self.config = Config(config_dikt)
         self.global_broadcast = 1
         self.scenario = scenario

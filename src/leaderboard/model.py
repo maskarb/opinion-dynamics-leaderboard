@@ -14,7 +14,7 @@ def convert_opinion(agent_list, time):  # noqa: C901
 
     def high_leader(i, attr):
         i += 1
-        return mean([getattr(a, attr)[time] for a in agent_list[i : i + 4]])
+        return mean([getattr(a, attr)[time] for a in agent_list[i : i + 3]])
 
     def mid_leader(i, attr):
         h = i - 1
@@ -25,7 +25,7 @@ def convert_opinion(agent_list, time):  # noqa: C901
 
     def low_leader(i, attr):
         i -= 1
-        return mean([getattr(a, attr)[time] for a in agent_list[i : i - 4 : -1]])
+        return mean([getattr(a, attr)[time] for a in agent_list[i : i - 3 : -1]])
 
     def calc_f(agent, diff_max):
         return 2 + (2 * agent.D[time] / diff_max)
