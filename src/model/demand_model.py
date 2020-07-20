@@ -1,4 +1,5 @@
 from mesa import Model
+from mesa.datacollection import DataCollector
 from mesa.time import RandomActivation
 
 from leaderboard.model import convert_opinion
@@ -18,29 +19,24 @@ class DemandModel(Model):
         self.schedule = RandomActivation(self)
         self.n_agents = N
         for i in range(self.n_agents):
-            ag = DemandAgent(i, self, "od_opinion")
+            ag = DemandAgent(i, self, "opinion_od")
             self.schedule.add(ag)
+        self.datacollector = DataCollector(
+            agent_reporters={"Opinion": "opinion_od", "New Opinion": "opinion_new", "Rank": "rank", "Score": "score"}
+        )
+        self.datacollector.collect(self)  # collect the initial values
 
     def step(self):
         """Advance the model by one step."""
-        self.schedule.step()
+        self.schedule.step()  # calculate the OD opinion
         for agent in self.schedule.agents:
-            agent.update_decision()
-        ranked_agents = sorted(self.schedule.agents, reverse=True)
+            agent.opinion_od = (
+                agent.opinion_staged
+            )  # after all OD opinions are calculated, replace old opinion with the staged opinion
+            agent.update_decision()  # update the decision
+        ranked_agents = sorted(self.schedule.agents, reverse=True)  # sort all the agents
         for i, agent in enumerate(ranked_agents):
-            agent.rank.append(i)
-        # self.give_agents_rank(ranked_agents)
-        convert_opinion(ranked_agents, self.schedule.time)
-
-    def opinion_rank(self, agent):
-        return agent.od_opinion[self.schedule.time]
-
-    def give_agents_rank(self, ranked_agents):
-        self.current_opinion = 0
-        self.current_rank = 0
-        for i, agent in enumerate(ranked_agents):
-            if agent.od_opinion[self.schedule.time] < self.current_opinion:
-                self.current_rank = i
-
-            self.current_opinion = agent.od_opinion[self.schedule.time]
-            agent.rank.append(self.current_rank)
+            agent.rank = i  # give each agent it's rank
+            agent.calculate_score()  # calculate the agent's score based on its rank
+        convert_opinion(ranked_agents)  # calculate the new-opinion based on leaderboard dynamics
+        self.datacollector.collect(self)  # collect all the agent attributes for this step
