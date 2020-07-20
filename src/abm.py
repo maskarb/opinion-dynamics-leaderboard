@@ -1,3 +1,4 @@
+import os
 import sys
 
 import numpy as np
@@ -8,11 +9,14 @@ from utils.config import read_yaml
 # load some owned plot functions
 # from utils.plot_functions import plot_colormap, plot_agents, plot_mean_std
 
+dirname = os.path.abspath(os.path.dirname(__file__))
+configs = os.path.join(dirname, "..", "configs")
+
 
 def main():
     seed = 100
     np.random.seed(seed)
-    model_config = "/Users/mskarbek/Documents/random/opinion-dynamics-leaderboard/configs/scores.yml"
+    model_config = os.path.join(configs, "scores.yml")
     config_dikt = read_yaml(model_config)
     # for runs in range(0, 1):
     num_agents = 10  # 100
@@ -25,13 +29,16 @@ def main():
         for _ in range(time_steps):
             model.step()
 
+        # results = model.datacollector.get_agent_vars_dataframe()
+        for agent in model.schedule.agents:
+            print(agent)
+
+        # print(results)
         # Store the results
-        all_opinion = np.zeros(shape=(time_steps + 1, num_agents))
-        for i, agent in enumerate(model.schedule.agents):
-            all_opinion[:, i] = np.array(agent.od_opinion)
-            print(
-                f"Agent rank: {agent.rank} Agent opinion {[round(x, 2) for x in agent.od_opinion]}, Agent Score: {agent.score}"  # noqa: E501
-            )
+        # all_opinion = np.zeros(shape=(time_steps + 1, num_agents))
+        # for i, agent in enumerate(model.schedule.agents):
+        # #     all_opinion[:, i] = np.array(agent.opinion_od)
+        #     print(agent)
         print(f"######### End Scenario: {scenario} #########\n")
 
     # print the all_opinion array
