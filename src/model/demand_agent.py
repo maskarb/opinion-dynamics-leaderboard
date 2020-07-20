@@ -10,47 +10,39 @@ class DemandAgent(Agent):
         super().__init__(unique_id, model)
         self.id = unique_id
         self.type = leaderboard
-        self._od_opinion = [0]
-        self._decision = [np.random.randint(0, 2)]  # [0]
         self.a = np.random.randint(0, 2, size=self.model.n_agents)
         self.b = np.random.randint(0, 2, size=self.model.n_agents)
-        self.threshold = np.random.uniform(0.3, 0.9)  # 0.9
-        self.rank = [0]
-        self.score = [0]
-        self.O_ave = [0]
-        self.S_ave = [0]
-        self.D = [0]
-        self.F = [0]
-        self.new_opinion = [0]
+        self.decision = np.random.randint(0, 2)
+        self.threshold = np.random.uniform(0.3, 0.9)
+        self.opinion_new = 0
+        self.opinion_od = 0
+        self.opinion_staged = 0
+        self.rank = 0
+        self.score = 0
 
     def __eq__(self, other):
-        return self.__class__ == other.__class__ and self.od_opinion[self.time] == other.od_opinion[self.time]
+        return (self.__class__, self.opinion_od) == (other.__class__, other.opinion_od)
 
     def __lt__(self, other):
-        return self.od_opinion[self.time] < other.od_opinion[self.time]
+        """Compare opinion_od. Ties are broken on score."""
+        return (self.opinion_od, self.score) < (other.opinion_od, other.score)
 
     def __gt__(self, other):
-        return self.od_opinion[self.time] > other.od_opinion[self.time]
+        """Compare opinion_od. Ties are broken on score."""
+        return (self.opinion_od, self.score) > (other.opinion_od, other.score)
 
-    @property
-    def decision(self):
-        return self._decision[self.time]
-
-    @property
-    def last_decision(self):
-        return self._decision[-1]
-
-    @property
-    def last_od_opinion(self):
-        return self.od_opinion[-1]
-
-    @property
-    def od_opinion(self):
-        return self._od_opinion
+    def __str__(self):
+        int_formatter = "{:4d}".format
+        float_formatter = "{:.5f}".format
+        np.set_printoptions(formatter={"float_kind": float_formatter, "int_kind": int_formatter})
+        df = self.model.datacollector.get_agent_vars_dataframe().query(f"AgentID == {self.id}")
+        return (
+            f"Agent ID: {self.id} | Rank: {df.Rank.values} | Opinion: {df.Opinion.values} | Score: {df.Score.values}"
+        )
 
     @property
     def opinion(self):
-        return getattr(self, self.type)[self.time]
+        return getattr(self, self.type)
 
     @property
     def sum_a(self):
@@ -64,27 +56,19 @@ class DemandAgent(Agent):
     def time(self):
         return self.model.schedule.time
 
-    @decision.setter
-    def decision(self, val):
-        self._decision.append(val)
-
-    @od_opinion.setter
-    def od_opinion(self, val):
-        self._od_opinion.append(val)
-
     def update_decision(self):
         # self.decision = 1
-        # print('opinion', self.od_opinion, 'threshold', self.threshold)
+        # print('opinion', self.opinion_od, 'threshold', self.threshold)
         # print('O[-1]', self.last_decision)
 
         # Basset formulation:
-        # if self.last_decision >= self.threshold:
+        # if self.decision >= self.threshold:
         #     self.decision = 1
         # else:
         #     self.decision = 0
 
         # Du formulation
-        if self.last_decision == 0 and self.last_od_opinion < self.threshold:
+        if self.decision == 0 and self.opinion_od < self.threshold:
             self.decision = 0
         else:
             self.decision = 1
@@ -110,27 +94,25 @@ class DemandAgent(Agent):
             self.scenario_4(gb, u_j)
 
     def calculate_score(self):
-        opinion = self.od_opinion[self.time]
-        score = self.score[self.time]
-
+        score = self.score
         for ranking in self.model.config.ranking_attrs:
             threshold = self.model.config.get(ranking)
-            if opinion >= threshold.threshold:
+            if self.opinion_od >= threshold.threshold:
                 score += threshold.points
                 break
-        self.score.append(score)
+        self.score = score
 
     def scenario_1(self, gb, u_j):
         op_gb = (self.opinion + u_j * gb) / (1 + u_j)
-        self.od_opinion = op_gb
+        self.opinion_staged = op_gb
 
     def scenario_2(self, gb, u_j):
-        sum_aijOi = self.a[self.id] * self.opinion  # 0
+        sum_aijOi = self.a[self.id] * self.opinion
         for agent in self.model.schedule.agents:
             if agent.id != self.id:
                 sum_aijOi += self.a[agent.id] * self.opinion
         op_gb_sm = (sum_aijOi + u_j * gb) / (self.sum_a + u_j)
-        self.od_opinion = op_gb_sm
+        self.opinion_staged = op_gb_sm
 
     def scenario_3(self, gb, u_j):
         sum_bijXi = self.b[self.id] * self.decision
@@ -138,7 +120,7 @@ class DemandAgent(Agent):
             if agent.id != self.id:
                 sum_bijXi += self.b[agent.id] * agent.decision
         op_gb_n = (self.opinion + sum_bijXi + u_j * gb) / (1 + self.sum_b + u_j)
-        self.od_opinion = op_gb_n
+        self.opinion_staged = op_gb_n
 
     def scenario_4(self, gb, u_j):
         sum_aijOi = self.a[self.id] * self.opinion
@@ -148,8 +130,7 @@ class DemandAgent(Agent):
                 sum_aijOi += self.a[agent.id] * self.opinion
                 sum_bijXi += self.b[agent.id] * agent.decision
         op_gb_sm_n = (sum_aijOi + sum_bijXi + u_j * gb) / (self.sum_a + self.sum_b + u_j)
-        self.od_opinion = op_gb_sm_n
+        self.opinion_staged = op_gb_sm_n
 
     def step(self):
         self.update_opinion()
-        self.calculate_score()
