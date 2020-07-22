@@ -21,25 +21,25 @@ def main():
     # for runs in range(0, 1):
     num_agents = 10  # 100
     time_steps = 5  # 30
-    scenario = int(sys.argv[-1]) if len(sys.argv) > 1 else 1
+    scenario = int(sys.argv[-1]) if len(sys.argv) > 1 else 2
     # Run the model
-    for scenario in range(1, 5):
-        print(f"######### Begin Scenario: {scenario} #########")
-        model = DemandModel(num_agents, scenario, config_dikt, seed=100)
-        for _ in range(time_steps):
-            model.step()
+    # for scenario in range(1, 5):
+    print(f"######### Begin Scenario: {scenario} #########")
+    model = DemandModel(time_steps, num_agents, scenario, config_dikt, seed=100)
+    for _ in range(time_steps):
+        model.step()
 
-        # results = model.datacollector.get_agent_vars_dataframe()
-        for agent in model.schedule.agents:
-            print(agent)
+    # results = model.datacollector.get_agent_vars_dataframe()
+    for agent in model.schedule.agents:
+        print(agent)
 
-        # print(results)
-        # Store the results
-        # all_opinion = np.zeros(shape=(time_steps + 1, num_agents))
-        # for i, agent in enumerate(model.schedule.agents):
-        # #     all_opinion[:, i] = np.array(agent.opinion_od)
-        #     print(agent)
-        print(f"######### End Scenario: {scenario} #########\n")
+    # print(results)
+    # Store the results
+    # all_opinion = np.zeros(shape=(time_steps + 1, num_agents))
+    # for i, agent in enumerate(model.schedule.agents):
+    # #     all_opinion[:, i] = np.array(agent.opinion_od)
+    #     print(agent)
+    print(f"######### End Scenario: {scenario} #########\n")
 
     # print the all_opinion array
     # pp = pprint.PrettyPrinter(indent=4)

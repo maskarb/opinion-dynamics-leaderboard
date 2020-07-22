@@ -1,3 +1,5 @@
+from random import choice
+
 import numpy as np
 
 from mesa import Agent
@@ -39,6 +41,14 @@ class DemandAgent(Agent):
         return (
             f"Agent ID: {self.id} | Rank: {df.Rank.values} | Opinion: {df.Opinion.values} | Score: {df.Score.values}"
         )
+
+    @property
+    def u(self):
+        return self.u_j[self.time]
+
+    @property
+    def influence(self):
+        return np.random.randint(0, 2)
 
     @property
     def opinion(self):
@@ -107,12 +117,17 @@ class DemandAgent(Agent):
         self.opinion_staged = op_gb
 
     def scenario_2(self, gb, u_j):
-        sum_aijOi = self.a[self.id] * self.opinion
-        for agent in self.model.schedule.agents:
-            if agent.id != self.id:
-                sum_aijOi += self.a[agent.id] * self.opinion
-        op_gb_sm = (sum_aijOi + u_j * gb) / (self.sum_a + u_j)
-        self.opinion_staged = op_gb_sm
+        paired_agent = choice(self.model.schedule.agents)
+        do_i_influence_the_other = self.influence * self.opinion_od
+        was_i_influenced = paired_agent.influence * paired_agent.opinion_od
+        paired_staged = (paired_agent.opinion_od + u_j * gb) / (1 + u_j)
+        if do_i_influence_the_other:
+            paired_staged = (self.opinion_od + paired_agent.opinion_od + u_j * gb) / (2 + u_j)
+        my_staged = (self.opinion_od + u_j * gb) / (1 + u_j)
+        if was_i_influenced:
+            my_staged = (self.opinion_od + paired_agent.opinion_od + u_j * gb) / (2 + u_j)
+        self.opinion_od = my_staged
+        paired_agent.opinion_od = paired_staged
 
     def scenario_3(self, gb, u_j):
         sum_bijXi = self.b[self.id] * self.decision
