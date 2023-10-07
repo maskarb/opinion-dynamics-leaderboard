@@ -19,8 +19,7 @@ class Tree(mesa.Agent):  # noqa
         """
         Customize the agent
         """
-        self.unique_id = unique_id
-        self.model = model
+        super().__init__(unique_id, model)
         self.condition = Condition.FINE
 
     def step(self):
