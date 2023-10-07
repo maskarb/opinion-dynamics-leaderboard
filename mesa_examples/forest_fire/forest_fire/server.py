@@ -1,11 +1,10 @@
 """
 Configure visualization elements and instantiate a server
 """
+import mesa
 
 from .model import Forest # noqa
 from .agent import Condition
-
-import mesa
 
 HEIGHT = 100
 WIDTH = 100
@@ -41,7 +40,7 @@ pie_chart = mesa.visualization.PieChartModule(
     [{"Label": label, "Color": color} for (label, color) in condition_colors.items()]
 )
 
-model_kwargs = {"width": WIDTH, "height": HEIGHT, "density": mesa.visualization.Slider("Tree Density", 0.65, 0.01, 1, 0.01)}
+model_kwargs = {"width": WIDTH, "height": HEIGHT, "density": mesa.visualization.Slider("Tree Density", 0.65, 0.01, 1, 0.01), "seed": 8002739158563429809}
 
 server = mesa.visualization.ModularServer(
     Forest,

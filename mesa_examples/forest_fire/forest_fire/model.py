@@ -16,19 +16,17 @@ class Forest(mesa.Model):
     The scheduler is a special model component which controls the order in which agents are activated.
     """
 
-    def __init__(self, width, height, density=0.65):
+    def __init__(self, width, height, density=0.65, seed=None):
         super().__init__()
 
         self.schedule = mesa.time.RandomActivation(self)
         self.grid = mesa.space.SingleGrid(width=width, height=height, torus=False)
 
-        unique_id = 0
         for _, pos in self.grid.coord_iter():
             if self.random.random() <= density:
-                unique_id += 1
-                agent = Tree(unique_id, self)
-                self.schedule.add(agent)
-                self.grid.place_agent(agent, pos)
+                tree = Tree(self.next_id(), self)
+                self.schedule.add(tree)
+                self.grid.place_agent(tree, pos)
 
         self.datacollector = DataCollector(
             {
@@ -61,4 +59,4 @@ class Forest(mesa.Model):
 
     @staticmethod
     def condition_count(model, condition: Condition):
-        return sum(agent.condition == condition for agent in model.schedule.agents)
+        return sum(tree.condition == condition for tree in model.schedule.agents)
