@@ -40,7 +40,7 @@ pie_chart = mesa.visualization.PieChartModule(
     [{"Label": label, "Color": color} for (label, color) in condition_colors.items()]
 )
 
-model_kwargs = {"width": WIDTH, "height": HEIGHT, "density": mesa.visualization.Slider("Tree Density", 0.65, 0.01, 1, 0.01), "seed": 8002739158563429809}
+model_kwargs = {"width": WIDTH, "height": HEIGHT, "density": mesa.visualization.Slider("Tree Density", 0.65, 0.01, 1, 0.01)}
 
 server = mesa.visualization.ModularServer(
     Forest,

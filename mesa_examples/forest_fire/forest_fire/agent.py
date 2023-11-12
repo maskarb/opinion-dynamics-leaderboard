@@ -28,8 +28,7 @@ class Tree(mesa.Agent):  # noqa
         Can include logic based on neighbors states.
         """
         if self.condition == Condition.ON_FIRE:
-            print(self.pos)
-            for neighbor in self.model.grid.iter_neighbors(self.pos, False):
+            for neighbor in self.model.grid.iter_neighbors(self.pos, True):
                 if neighbor.condition == Condition.FINE:
                     neighbor.condition = Condition.ON_FIRE
             self.condition = Condition.BURNED_OUT
